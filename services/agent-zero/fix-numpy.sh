@@ -14,7 +14,12 @@ preload_ok() {
 	local out
 	out=$(cd /git/agent-zero && timeout 900 python preload.py --dockerized=true 2>&1)
 	echo "$out" | tail -n 5 | sed 's/^/fix-numpy: preload: /'
-	! echo "$out" | grep -q "Error in preload"
+	echo "$out" | grep -q "Error in preload" && return 1
+	# The build-time preload does not reach every runtime import; scipy.special
+	# is the module that fails at runtime, so test it directly.
+	out=$(python -c "import numpy, scipy.special, faiss; print('numpy', numpy.__version__, 'scipy imports ok')" 2>&1)
+	echo "$out" | tail -n 3 | sed 's/^/fix-numpy: import: /'
+	echo "$out" | grep -q "scipy imports ok"
 }
 
 if preload_ok; then
