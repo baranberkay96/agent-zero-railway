@@ -1,0 +1,92 @@
+{
+  "name": "Agent Zero v2 Autonomous AI Agent with Its Own Linux Shell",
+  "description": "General-purpose AI agent that writes and runs code in its own container.",
+  "category": "AI/ML",
+  "tags": [
+    "agent-zero",
+    "ai-agent",
+    "autonomous-agent",
+    "code-execution",
+    "llm",
+    "openrouter",
+    "anthropic",
+    "openai",
+    "mcp",
+    "self-hosted"
+  ],
+  "image": "https://cdn.jsdelivr.net/gh/agent0ai/agent-zero@2b0b3a416d80638379dc575798a4174ab4d3e1d9/webui/public/icon.svg",
+  "upstream": {
+    "agent-zero": "agent0ai/agent-zero v2.16 (MIT), image agent0ai/agent-zero:v2.16 pinned by index digest",
+    "checked": "2026-11-20"
+  },
+  "services": {
+    "Agent Zero": {
+      "icon": "https://cdn.jsdelivr.net/gh/agent0ai/agent-zero@2b0b3a416d80638379dc575798a4174ab4d3e1d9/webui/public/icon.svg",
+      "source": {
+        "repo": "baranberkay96/agent-zero-railway",
+        "rootDirectory": "/services/agent-zero"
+      },
+      "startCommand": null,
+      "preDeployCommand": null,
+      "healthcheckPath": "/api/health",
+      "healthcheckTimeout": 900,
+      "restartPolicyType": "ALWAYS",
+      "numReplicas": 1,
+      "cronSchedule": null,
+      "publicDomain": true,
+      "targetPort": 80,
+      "tcpProxy": null,
+      "volume": {
+        "mountPath": "/a0/usr"
+      },
+      "variables": {
+        "AUTH_LOGIN": {
+          "defaultValue": "admin",
+          "description": "Web UI login user name (letters, digits, . _ @ -).",
+          "required": true
+        },
+        "AUTH_PASSWORD": {
+          "defaultValue": "${{secret(24, \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\")}}",
+          "description": "Web UI password, generated at deploy. 12-128 characters; anything else locks the login until you fix it. A password saved later in Settings takes precedence.",
+          "required": true
+        },
+        "PORT": {
+          "defaultValue": "80",
+          "description": "Port of Agent Zero's web UI (fixed upstream); Railway's healthcheck and domain use it.",
+          "required": true
+        },
+        "API_KEY_OPENROUTER": {
+          "defaultValue": "",
+          "description": "Optional. OpenRouter API key (one key for many models). You can also add keys later in Settings.",
+          "required": false
+        },
+        "API_KEY_ANTHROPIC": {
+          "defaultValue": "",
+          "description": "Optional. Anthropic API key (Claude).",
+          "required": false
+        },
+        "API_KEY_OPENAI": {
+          "defaultValue": "",
+          "description": "Optional. OpenAI API key.",
+          "required": false
+        },
+        "API_KEY_GOOGLE": {
+          "defaultValue": "",
+          "description": "Optional. Google Gemini API key.",
+          "required": false
+        },
+        "TZ": {
+          "defaultValue": "UTC",
+          "description": "Time zone of the agent's Linux environment.",
+          "required": false
+        },
+        "RAILWAY_DEPLOYMENT_DRAINING_SECONDS": {
+          "defaultValue": "30",
+          "description": "Time the agent gets to save state on redeploy.",
+          "required": false
+        }
+      }
+    }
+  },
+  "buckets": []
+}
