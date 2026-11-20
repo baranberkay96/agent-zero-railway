@@ -22,8 +22,33 @@ preload_ok() {
 	echo "$out" | grep -q "scipy imports ok"
 }
 
+# Files under numpy/ that numpy's own RECORD does not list are leftovers of
+# another numpy release; at runtime some import reaches them and scipy then sees
+# two ufunc classes ("All ufuncs must have type numpy.ufunc"). Remove them.
+python - "$site" <<'PY'
+import csv, glob, os, shutil, sys
+site = sys.argv[1]
+records = glob.glob(os.path.join(site, "numpy-*.dist-info", "RECORD"))
+if len(records) != 1:
+    print("fix-numpy: expected one numpy dist-info, found", len(records)); sys.exit(0)
+keep = {os.path.normpath(r[0]) for r in csv.reader(open(records[0])) if r}
+stray = []
+for root, dirs, files in os.walk(os.path.join(site, "numpy")):
+    dirs[:] = [d for d in dirs if d != "__pycache__"]
+    for f in files:
+        rel = os.path.normpath(os.path.relpath(os.path.join(root, f), site))
+        if rel not in keep:
+            stray.append(rel)
+print("fix-numpy: stray numpy files:", len(stray), " ".join(sorted(stray)[:15]))
+for rel in stray:
+    os.remove(os.path.join(site, rel))
+for root, dirs, files in os.walk(os.path.join(site, "numpy"), topdown=False):
+    if not os.listdir(root):
+        os.rmdir(root)
+PY
+
 if preload_ok; then
-	echo "fix-numpy: preload works, nothing to do"
+	echo "fix-numpy: preload works"
 	exit 0
 fi
 version() { find "$site" -maxdepth 1 -type d -name "$1-*.dist-info" -printf '%f\n' | sed -E "s/^$1-(.*)\.dist-info$/\1/" | sort -V | tail -1; }
