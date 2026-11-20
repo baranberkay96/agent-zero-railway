@@ -19,7 +19,7 @@ preload_ok() {
 	echo "$out" | grep -q "Error in preload" && return 1
 	# The build-time preload does not reach every runtime import; scipy.special
 	# is the module that fails at runtime, so test it directly.
-	out=$(python -c "import numpy, scipy.special, faiss; print('numpy', numpy.__version__, 'scipy imports ok')" 2>&1)
+	out=$(python -c "import numpy, scipy.special, scipy.sparse.linalg, sklearn, faiss; print('numpy', numpy.__version__, 'scipy imports ok')" 2>&1)
 	echo "$out" | tail -n 3 | sed 's/^/fix-numpy: import: /'
 	echo "$out" | grep -q "scipy imports ok"
 }
@@ -59,7 +59,10 @@ esac
 SCIPY_FALLBACK=1.14.1
 echo "fix-numpy: numpy $(version numpy) with scipy $(version scipy) : installing scipy $SCIPY_FALLBACK"
 for attempt in 1 2 3 4 5; do
-	uv pip install --reinstall --no-deps --no-cache "scipy==$SCIPY_FALLBACK" && break
+	# Remove the whole package directory first: the image's scipy folder holds
+	# files its RECORD does not list, which a plain reinstall leaves behind.
+	uv pip uninstall scipy >/dev/null 2>&1; rm -rf "$site/scipy" "$site"/scipy-*.dist-info "$site/scipy.libs"
+	uv pip install --no-deps --no-cache "scipy==$SCIPY_FALLBACK" && break
 	[ "$attempt" = 5 ] && { echo "fix-numpy: reinstall failed, leaving the image as it was"; exit 0; }
 	sleep $((attempt * 10))
 done
