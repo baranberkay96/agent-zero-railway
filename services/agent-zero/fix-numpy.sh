@@ -10,6 +10,8 @@ source /opt/venv-a0/bin/activate
 site=$(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
 echo "fix-numpy: numpy/scipy dist-info: $(cd "$site" && ls -d numpy-*.dist-info scipy-*.dist-info 2>/dev/null | tr '\n' ' ')"
 
+version() { find "$site" -maxdepth 1 -type d -name "$1-*.dist-info" -printf '%f\n' | sed -E "s/^$1-(.*)\.dist-info$/\1/" | sort -V | tail -1; }
+
 preload_ok() {
 	local out
 	out=$(cd /git/agent-zero && timeout 900 python preload.py --dockerized=true 2>&1)
@@ -47,13 +49,15 @@ for root, dirs, files in os.walk(os.path.join(site, "numpy"), topdown=False):
         os.rmdir(root)
 PY
 
-if preload_ok; then
-	echo "fix-numpy: preload works"
-	exit 0
-fi
-version() { find "$site" -maxdepth 1 -type d -name "$1-*.dist-info" -printf '%f\n' | sed -E "s/^$1-(.*)\.dist-info$/\1/" | sort -V | tail -1; }
+# The build-time checks pass, yet the runtime preload still fails inside the
+# UI process (seen on Railway). scipy >= 1.15 ships the multi-ufuncs that
+# trigger it; with numpy 1.x always use the last scipy release without them.
+case "$(version numpy)" in
+1.*) ;;
+*) if preload_ok; then echo "fix-numpy: numpy 2, preload works"; exit 0; fi ;;
+esac
 SCIPY_FALLBACK=1.14.1
-echo "fix-numpy: numpy $(version numpy) with scipy $(version scipy) fails; installing scipy $SCIPY_FALLBACK"
+echo "fix-numpy: numpy $(version numpy) with scipy $(version scipy) : installing scipy $SCIPY_FALLBACK"
 for attempt in 1 2 3 4 5; do
 	uv pip install --reinstall --no-deps --no-cache "scipy==$SCIPY_FALLBACK" && break
 	[ "$attempt" = 5 ] && { echo "fix-numpy: reinstall failed, leaving the image as it was"; exit 0; }
