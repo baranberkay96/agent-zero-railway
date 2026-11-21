@@ -1,5 +1,7 @@
 # Deploy and Host Agent Zero with Railway
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/agent-zero-v2-autonomous-ai-agent-with-i?referralCode=20H68q)
+
 Agent Zero is an open-source, general-purpose AI agent that uses its own Linux environment as a tool: it writes and runs code, works in a terminal, searches the web, remembers what it learns and delegates to sub-agents. This community template runs the official Agent Zero v2 image on Railway with a login and persistent data.
 
 ## About Hosting Agent Zero
