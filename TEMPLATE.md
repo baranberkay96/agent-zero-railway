@@ -28,7 +28,7 @@
 
 1. Pinned release (tag + index digest) instead of `:latest`.
 2. Login on by default with a generated password; fail-closed checks (STANDARD 8.29) and a start-log warning if a login saved in Settings disables it.
-3. numpy repair at build time (`fix-numpy.sh`): the v2.16 image mixes files of two numpy releases, `scipy.special` fails and Agent Zero logs `Error in preload: All ufuncs must have type numpy.ufunc` (seen on our first test deploy). Fixed once in the image instead of at every start.
+3. Numeric dependencies isolated at build time (`fix-numpy.sh`): NumPy 1.26.4 + SciPy 1.14.1 in `/opt/railway-numeric`, prepended only in the app’s CPython 3.12 virtualenv through a `.pth` file. Old SciPy files reappeared beside replacement files in Railway runtime despite clean build checks; a fresh import directory avoids that mixed tree. A real all-MiniLM-L6-v2 inference check gates the build; failed installation or inference fails the build. The image’s separate Python 3.13 tool environment is unaffected.
 4. Healthcheck `/api/health` with a 900 s window; optional provider keys under the names Agent Zero reads (`API_KEY_<PROVIDER>`).
 
 ## Pinned versions
@@ -55,17 +55,17 @@ Volume /a0/usr: settings.json, .env (keys, login), chats, memory, knowledge, pro
 
 Variables: `AUTH_LOGIN=admin`, `AUTH_PASSWORD` (`secret(24)` alphanumeric), `PORT=80`, optional `API_KEY_OPENROUTER`, `API_KEY_ANTHROPIC`, `API_KEY_OPENAI`, `API_KEY_GOOGLE`, `TZ=UTC`, `RAILWAY_DEPLOYMENT_DRAINING_SECONDS=30`.
 
-## Resource profile (measured on Railway, 2026-11-20)
+## Resource profile (measured on Railway, 2026-11-21)
 
 | Service | Idle RAM | CPU idle |
 |---|---|---|
-| Agent Zero | 0.82 GB (after boot, before any chat) | ~0.004 vCPU |
+| Agent Zero | 1.39 GB after embedding preload (1.55 GB startup/test peak) | ~0.002 vCPU |
 
-Estimated cost idle: ~0.9 GB × $10 + volume ≈ **$9–10/month**; more while the agent works. Minimum plan: **Hobby** (Trial's 1 GB leaves no room for the embedding model and code execution).
+Estimated cost idle: ~1.4 GB × $10 + volume ≈ **$14–16/month**; more while the agent works. Minimum plan: **Hobby** (Trial's 1 GB leaves no room for the embedding model and code execution).
 
-## Test results (Railway, pre-publish, 2026-11-20)
+## Test results (Railway, pre-publish, 2026-11-21)
 
-RESULTS_PLACEHOLDER
+2026-11-21: amd64 Docker build passed, including finite `(1, 384)` embedding inference. Full local startup with `--init` logged `Preload completed`. Railway deployment `fb64a602-29ee-4ec5-96f9-629abc41e19f` from `10139e9` reached SUCCESS and logged `Preload completed`. Actual upstream `Memory.get_by_subdir` inserted a document and retrieved it semantically without an LLM provider key. Generated login worked; anonymous requests redirected to `/login`; `AUTH_PASSWORD=short` kept the service healthy and rejected the weak password with no session cookie. A 2 GB service cap was configured. Railway memory measured 1.39 GB current, 1.55 GB peak; provider-backed chat remains untested because no LLM key was supplied.
 
 ## Verification checklist
 

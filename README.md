@@ -40,7 +40,9 @@ The template turns on Agent Zero's own web login with a generated password and m
 
 **What runs inside.** Agent Zero runs code as root inside its own container. It cannot reach your other Railway services unless you tell it their private addresses, but treat it like a shell you share with an AI: keep the login secret and only give it keys it needs.
 
-**Resources.** About 0.82 GB RAM idle after boot (measured on Railway, before any chat); the local embedding model and code execution add more, so plan for about 2 GB (Hobby plan or higher).
+**Resources.** Measured on Railway after the local embedding model loaded: about 1.39 GB RAM, with a 1.55 GB peak during startup and verification. Use Hobby or higher with at least 2 GB per service; Trial (1 GB) and Free (0.5 GB) are too small. Code execution can need more.
+
+**Local embeddings.** The template installs NumPy 1.26.4 and SciPy 1.14.1 into a separate directory, scoped to Agent Zero’s Python virtualenv, and verifies real 384-dimensional embedding inference during the build. This avoids mixed numeric files in the upstream image while retaining memory and knowledge features.
 
 **Scaling.** One agent instance per service; state lives on the volume, so keep one replica. Give the service more CPU for heavy code execution.
 

@@ -2,11 +2,12 @@
 
 ## Software deployed
 
-- **Agent Zero** by Agent Zero, s.r.o. and contributors, MIT License, https://github.com/agent0ai/agent-zero. Deployed unmodified from the official image `agent0ai/agent-zero:v2.16` (pinned by digest). The image bundles third-party software under their own licences (SearXNG AGPL-3.0, Playwright/Chromium, Python and Node packages), all unmodified.
+- **Agent Zero** by Agent Zero, s.r.o. and contributors, MIT License, https://github.com/agent0ai/agent-zero. Deployed unmodified from the official image `agent0ai/agent-zero:v2.16` (pinned by digest). The image bundles third-party software under their own licences (SearXNG AGPL-3.0, Playwright/Chromium, Python and Node packages), with a template-specific NumPy/SciPy import-path repair described below.
 
 ## Written for this template
 
 - `services/agent-zero/Dockerfile`, `services/agent-zero/railway-start.sh`: login checks and warnings; they call the image's own `/exe/initialize.sh`.
+- `services/agent-zero/fix-numpy.sh`: installs NumPy 1.26.4 (BSD-3-Clause) and SciPy 1.14.1 (BSD-3-Clause) in a fresh import directory, scoped to the app virtualenv, and verifies local embedding inference. The upstream application code is unchanged.
 - `README.md`, `TEMPLATE.md`, `template.json`.
 
 ## Upstream files checked (read only, 2026-11-20)
